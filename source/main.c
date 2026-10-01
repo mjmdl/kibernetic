@@ -3,6 +3,8 @@
 #include <GL/gl.h>
 
 #include "common.h"
+#include "opengl.h"
+#include "renderer.h"
 #include "window.h"
 
 int main(void) {
@@ -12,6 +14,50 @@ int main(void) {
     }
 
     const Platform_Input *input = window_input(window);
+
+    const float triangle_vertices[] = {
+        -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f, 1.0f,
+    };
+    const char *vertex_glsl =
+        "#version 460 core\n"
+        "layout (location = 1) in vec2 v_position;"
+        "layout (location = 2) in vec3 v_color;"
+        "out vec3 f_color;"
+        "void main() {"
+        "    gl_Position = vec4(v_position.xy, 0.0, 1.0);"
+        "    f_color = v_color;"
+        "}";
+    const char *fragment_glsl =
+        "#version 460 core\n"
+        "in vec3 f_color;"
+        "out vec4 fragment;"
+        "void main() {"
+        "    fragment = vec4(f_color.xyz, 1.0);"
+        "}";
+
+    GLuint vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    GLuint vbo = 0;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+
+    const Shader_Source shader_sources[] = {
+        {.data = vertex_glsl, .kind = SHADER_KIND_VERTEX},
+        {.data = fragment_glsl, .kind = SHADER_KIND_FRAGMENT},
+    };
+    Shader shader = {0};
+    shader_create_from_sources(shader_sources, ARRAY_LENGTH(shader_sources), &shader);
+
+    GLint position_location = glGetAttribLocation(shader.id, "v_position");
+    glEnableVertexAttribArray(position_location);
+    glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)0);
+    GLint color_location = glGetAttribLocation(shader.id, "v_color");
+    glEnableVertexAttribArray(color_location);
+    glVertexAttribPointer(color_location, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)(2 * sizeof (float)));
 
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 
@@ -39,6 +85,10 @@ int main(void) {
         }
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindVertexArray(vao);
+        glUseProgram(shader.id);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         window_swap_buffers(window);
     }
