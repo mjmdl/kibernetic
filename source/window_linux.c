@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "input_linux.h"
+#include "opengl.h"
 #include "string.h"
 #include "window_linux.h"
 
@@ -23,6 +24,33 @@ static int handle_xlib_error_event(Display *display, XErrorEvent *event) {
     LOG_ERROR("X11: %.*s (error #%d, request #%d, minor #%d).", (int)sizeof(log), log, event->error_code, event->request_code, event->minor_code);
 
     return 0;
+}
+
+static void handle_opengl_debug_message(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const *message, void const *user_param) {
+    (void)user_param;
+
+    #define LOG_GL_MESSAGE(LOGGER, LEVEL) \
+        LOGGER("OpenGL (" LEVEL "): %.*s (source=%d, type=%d, id=%d)", (int)length, message, source, type, id)
+
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        LOG_GL_MESSAGE(LOG_ERROR, "HIGH");
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        LOG_GL_MESSAGE(LOG_WARN, "MEDIUM");
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        LOG_GL_MESSAGE(LOG_DEBUG, "LOW");
+        break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        LOG_GL_MESSAGE(LOG_DEBUG, "NOTIFICATION");
+        break;
+    default:
+        LOG_GL_MESSAGE(LOG_DEBUG, "?");
+        break;
+    }
+
+    #undef LOG_GL_MESSAGE
 }
 
 static bool check_glx_version(Display *display) {
@@ -249,6 +277,30 @@ static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfi
     return true;
 }
 
+static bool load_opengl_procs(void) {
+    int loaded = 0;
+    int failed = 0;
+
+    #define LOAD_PROC(RETURN, PROC, ARGUMENTS) \
+        PROC = (OPENGL_PROC_TYPE(PROC))glXGetProcAddressARB((const GLubyte *)#PROC); \
+        if (PROC != NULL) { \
+            ++loaded; \
+        } else { \
+            LOG_ERROR("Failed to load the OpenGL procedure " #PROC "."); \
+            ++failed; \
+        }
+    FOREACH_OPENGL_PROC_FROM_CORE_1_2_TO_4_5(LOAD_PROC)
+    #undef LOAD_PROC
+
+    if (failed == 0) {
+        LOG_DEBUG("Successfully loaded %d OpenGL procedures.", loaded);
+        return true;
+    } else {
+        LOG_ERROR("Failed to load %d out of %d OpenGL procedures.", failed, loaded + failed);
+        return false;
+    }
+}
+
 static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window window, GLXContext *out_context) {
     typedef GLXContext(*Glx_Create_Context_Attribs_Arb_Proc)(Display *display, GLXFBConfig fb_config, GLXContext context, Bool direct, const int *attribs);
 
@@ -265,7 +317,7 @@ static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window w
 
     Glx_Create_Context_Attribs_Arb_Proc glXCreateContextAttribsARB = (Glx_Create_Context_Attribs_Arb_Proc)glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
     if (glXCreateContextAttribsARB == NULL) {
-        LOG_ERROR("Failed to retrieve the GLX context function.");
+        LOG_ERROR("Failed to retrieve the GLX context procedure.");
         return false;
     }
 
@@ -367,6 +419,14 @@ Platform_Window *window_create(void) {
         XCloseDisplay(display);
         return NULL;
     }
+
+    if (!load_opengl_procs()) {
+        glXDestroyContext(display, context);
+        XCloseDisplay(display);
+        return NULL;
+    }
+
+    glDebugMessageCallback(handle_opengl_debug_message, NULL);
 
     Atom close_message;
     setup_xlib_window_manager_protocols(display, window, &close_message);
