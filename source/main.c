@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 
 #include "common.h"
+#include "log.h"
 #include "opengl.h"
 #include "renderer.h"
 #include "window.h"
@@ -16,9 +17,12 @@ int main(void) {
     const Platform_Input *input = window_input(window);
 
     const float triangle_vertices[] = {
-        -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.5f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.0f, 0.0f,
     };
 
     GLuint vao = 0;
@@ -30,18 +34,21 @@ int main(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
 
     const Shader_Source shader_paths[] = {
-        {.data = "shaders/color.vertex.glsl", .kind = SHADER_KIND_VERTEX},
-        {.data = "shaders/color.fragment.glsl", .kind = SHADER_KIND_FRAGMENT},
+        {.data = "shaders/texture.vertex.glsl", .kind = SHADER_KIND_VERTEX},
+        {.data = "shaders/texture.fragment.glsl", .kind = SHADER_KIND_FRAGMENT},
     };
     Shader shader = {0};
     shader_create_from_file_paths(shader_paths, ARRAY_LENGTH(shader_paths), &shader);
 
     GLint position_location = glGetAttribLocation(shader.id, "v_position");
     glEnableVertexAttribArray(position_location);
-    glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)0);
-    GLint color_location = glGetAttribLocation(shader.id, "v_color");
-    glEnableVertexAttribArray(color_location);
-    glVertexAttribPointer(color_location, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)(2 * sizeof (float)));
+    glVertexAttribPointer(position_location, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (const void *)0);
+    GLint texcoord_location = glGetAttribLocation(shader.id, "v_texcoord");
+    glEnableVertexAttribArray(texcoord_location);
+    glVertexAttribPointer(texcoord_location, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (const void *)(2 * sizeof (float)));
+
+    Texture texture = {0};
+    texture_load_from_path("textures/crate.bmp", &texture);
 
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 
@@ -72,7 +79,9 @@ int main(void) {
 
         glBindVertexArray(vao);
         glUseProgram(shader.id);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         window_swap_buffers(window);
     }

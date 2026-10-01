@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "input_linux.h"
+#include "log.h"
 #include "opengl.h"
 #include "string.h"
 #include "window_linux.h"

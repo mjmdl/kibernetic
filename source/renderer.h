@@ -22,12 +22,22 @@ typedef struct Shader_Source {
     Shader_Kind kind;
 } Shader_Source;
 
+typedef struct Texture {
+    uint32_t id;
+} Texture;
+
 enum {
     SHADER_SOURCE_MAX_COUNT = 5,
 };
 
 bool shader_create_from_sources(const Shader_Source *sources, int souces_count, Shader *out_shader);
+
 bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, Shader *out_shader);
+
 void shader_destroy(Shader *shader);
+
+bool texture_load_from_path(const char *file_path, Texture *out_texture);
+
+void texture_destroy(Texture *texture);
 
 #endif // RENDERER_H

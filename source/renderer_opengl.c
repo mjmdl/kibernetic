@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "common.h"
+#include "bitmap.h"
 #include "file.h"
+#include "log.h"
 #include "opengl.h"
 #include "renderer.h"
 
@@ -155,4 +156,30 @@ bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, 
 
 void shader_destroy(Shader *shader) {
     glDeleteProgram(shader->id);
+}
+
+bool texture_load_from_path(const char *file_path, Texture *out_texture) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    Bitmap bitmap = {0};
+    if (!bitmap_load_from_path(file_path, &bitmap)) {
+        return false;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.width, bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.pixels);
+    bitmap_unload(&bitmap);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    *out_texture = (Texture){.id = texture};
+    return true;
+}
+
+void texture_destroy(Texture *texture) {
+    glDeleteTextures(1, &texture->id);
 }

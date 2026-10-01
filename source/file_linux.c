@@ -13,6 +13,7 @@
 
 #include "common.h"
 #include "file.h"
+#include "log.h"
 
 bool file_read(char const *path, File *out_file) {
     int file = open(path, O_RDONLY);
