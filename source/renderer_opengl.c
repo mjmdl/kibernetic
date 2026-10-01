@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "file.h"
 #include "opengl.h"
 #include "renderer.h"
 
@@ -103,6 +104,52 @@ bool shader_create_from_sources(const Shader_Source *sources, int souces_count, 
     }
 
     *out_shader = (Shader){.id = program, .kinds = kinds};
+    return true;
+}
+
+bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, Shader *out_shader) {
+    if (1 > paths_count || paths_count > SHADER_SOURCE_MAX_COUNT) {
+        LOG_ERROR("shader_create_from_file_paths expects between 1 and %d shader sources.", SHADER_SOURCE_MAX_COUNT);
+        return false;
+    }
+
+    Shader_Source sources[SHADER_SOURCE_MAX_COUNT] = {0};
+    File files[SHADER_SOURCE_MAX_COUNT] = {0};
+    bool failure = false;
+
+    int sources_count = 0;
+    for (int i = 0; i < paths_count; ++i) {
+        const Shader_Source *path = paths + i;
+        File *file = files + i;
+        if (file_read(path->data, file)) {
+            sources[sources_count] = (Shader_Source){
+                .data = file->data,
+                .kind = path->kind,
+            };
+            ++sources_count;
+        } else {
+            failure = true;
+        }
+    }
+
+    Shader shader = {0};
+    if (sources_count >= 1 && !shader_create_from_sources(sources, sources_count, &shader)) {
+        failure = true;
+    }
+
+    for (int i = 0; i < sources_count; ++i) {
+        file_free(&files[i]);
+    }
+
+    if (failure) {
+        if (shader.id != 0) {
+            glDeleteShader(shader.id);
+        }
+
+        return false;
+    }
+
+    *out_shader = shader;
     return true;
 }
 

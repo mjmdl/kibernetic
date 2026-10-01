@@ -27,6 +27,7 @@ enum {
 };
 
 bool shader_create_from_sources(const Shader_Source *sources, int souces_count, Shader *out_shader);
+bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, Shader *out_shader);
 void shader_destroy(Shader *shader);
 
 #endif // RENDERER_H

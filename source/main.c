@@ -20,22 +20,6 @@ int main(void) {
         0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.5f, 0.0f, 0.0f, 1.0f,
     };
-    const char *vertex_glsl =
-        "#version 460 core\n"
-        "layout (location = 1) in vec2 v_position;"
-        "layout (location = 2) in vec3 v_color;"
-        "out vec3 f_color;"
-        "void main() {"
-        "    gl_Position = vec4(v_position.xy, 0.0, 1.0);"
-        "    f_color = v_color;"
-        "}";
-    const char *fragment_glsl =
-        "#version 460 core\n"
-        "in vec3 f_color;"
-        "out vec4 fragment;"
-        "void main() {"
-        "    fragment = vec4(f_color.xyz, 1.0);"
-        "}";
 
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
@@ -45,12 +29,12 @@ int main(void) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
 
-    const Shader_Source shader_sources[] = {
-        {.data = vertex_glsl, .kind = SHADER_KIND_VERTEX},
-        {.data = fragment_glsl, .kind = SHADER_KIND_FRAGMENT},
+    const Shader_Source shader_paths[] = {
+        {.data = "shaders/color.vertex.glsl", .kind = SHADER_KIND_VERTEX},
+        {.data = "shaders/color.fragment.glsl", .kind = SHADER_KIND_FRAGMENT},
     };
     Shader shader = {0};
-    shader_create_from_sources(shader_sources, ARRAY_LENGTH(shader_sources), &shader);
+    shader_create_from_file_paths(shader_paths, ARRAY_LENGTH(shader_paths), &shader);
 
     GLint position_location = glGetAttribLocation(shader.id, "v_position");
     glEnableVertexAttribArray(position_location);
