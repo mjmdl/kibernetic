@@ -40,6 +40,10 @@ bool window_cursor_locked(const Platform_Window *window);
 
 void window_set_cursor_locked(Platform_Window *window, bool cursor_locked);
 
+bool window_vsync(const Platform_Window *window);
+
+void window_set_vsync(Platform_Window *window, bool vsync);
+
 const Platform_Input *window_input(const Platform_Window *window);
 
 #endif // WINDOW_H

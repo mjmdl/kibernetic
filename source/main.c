@@ -6,6 +6,7 @@
 #include "log.h"
 #include "opengl.h"
 #include "renderer.h"
+#include "time.h"
 #include "window.h"
 
 int main(void) {
@@ -48,12 +49,20 @@ int main(void) {
     glVertexAttribPointer(texcoord_location, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (const void *)(2 * sizeof (float)));
 
     Texture texture = {0};
-    texture_load_from_path("textures/crate.bmp", &texture);
+    texture_load_from_path("textures/casey.bmp", &texture);
 
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 
+    Loop_Timer timer = {0};
+    loop_timer_reset(&timer);
+    window_set_vsync(window, false);
+
     while (!window_should_close(window)) {
+        loop_timer_begin(&timer);
         window_poll_events(window);
+
+        while (loop_timer_drain(&timer)) {
+        }
 
         if (input_key_down(input, KEY_X)) {
             window_set_should_close(window, true);
@@ -63,9 +72,7 @@ int main(void) {
             LOG_DEBUG("Space is pressed.");
         } else if (input_key_released(input, KEY_SPACE)) {
             LOG_DEBUG("Space is released.");
-        }
-
-        if (input_mouse_x_delta(input) != 0 || input_mouse_y_delta(input) != 0) {
+        } else if (input_key_down(input, KEY_SPACE)) {
             LOG_DEBUG("Mouse pos: %.2fx%.2f", input_mouse_x(input), input_mouse_y(input));
         }
 
@@ -84,6 +91,7 @@ int main(void) {
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         window_swap_buffers(window);
+        loop_timer_end(&timer);
     }
 
     window_destroy(window);

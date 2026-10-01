@@ -10,11 +10,12 @@ struct Platform_Window {
     bool initialized;
     bool should_close;
     bool cursor_locked;
-    bool ignore_next_motion_event;
+    bool vsync;
     int width;
     int height;
 
     Platform_Input input;
+    bool ignore_next_motion_event;
 
     Display *display;
     GLXContext context;

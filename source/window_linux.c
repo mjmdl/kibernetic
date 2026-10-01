@@ -78,7 +78,7 @@ static bool check_glx_version(Display *display) {
     /* X(NAME, REQUIRED) */ \
     X(GLX_ARB_get_proc_address, true) \
     X(GLX_ARB_create_context_profile, true) \
-    X(GLX_EXT_swap_buffers, false)
+    X(GLX_EXT_swap_control, false)
 
 #define DECLARE_VARIABLE(NAME, REQUIRED) \
     static bool support_##NAME;
@@ -720,6 +720,33 @@ void window_set_cursor_locked(Platform_Window *window, bool cursor_locked) {
     }
 
     window->cursor_locked = cursor_locked;
+}
+
+bool window_vsync(const Platform_Window *window) {
+    return window->vsync;
+}
+
+void window_set_vsync(Platform_Window *window, bool vsync) {
+    typedef void(*Vsync_Proc)(Display *display, GLXDrawable drawable, int interval);
+    static Vsync_Proc glXSwapIntervalEXT;
+
+    if (glXSwapIntervalEXT == NULL) {
+        glXSwapIntervalEXT = (Vsync_Proc)glXGetProcAddressARB((const GLubyte *)"glXSwapIntervalEXT");
+        if (glXSwapIntervalEXT == NULL) {
+            LOG_WARN("Failed to load the GLX function glXSwapIntervalEXT.");
+
+            if (support_GLX_EXT_swap_control) {
+                support_GLX_EXT_swap_control = false;
+            } else {
+                LOG_WARN("VSync control is not supported.");
+            }
+
+            return;
+        }
+    }
+
+    glXSwapIntervalEXT(window->display, window->window, vsync ? 1 : 0);
+    window->vsync = vsync;
 }
 
 const Platform_Input *window_input(const Platform_Window *window) {
