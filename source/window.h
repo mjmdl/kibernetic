@@ -1,9 +1,10 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
-#include <stdbool.h>
+#include "input.h"
 
 typedef struct Platform_Window Platform_Window;
 
@@ -16,6 +17,8 @@ void window_poll_events(Platform_Window *window);
 void window_swap_buffers(Platform_Window *window);
 
 bool window_should_close(const Platform_Window *window);
+
+void window_set_should_close(Platform_Window *window, bool should_close);
 
 void window_position(const Platform_Window *window, int *out_x, int *out_y);
 
@@ -36,5 +39,7 @@ void window_set_title(Platform_Window *window, const char *title);
 bool window_cursor_locked(const Platform_Window *window);
 
 void window_set_cursor_locked(Platform_Window *window, bool cursor_locked);
+
+const Platform_Input *window_input(const Platform_Window *window);
 
 #endif // WINDOW_H

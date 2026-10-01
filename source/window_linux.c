@@ -2,8 +2,10 @@
 #include <stdlib.h>
 
 #include <X11/extensions/Xinerama.h>
+#include <X11/keysymdef.h>
 
 #include "common.h"
+#include "input_linux.h"
 #include "string.h"
 #include "window_linux.h"
 
@@ -337,7 +339,7 @@ Platform_Window *window_create(void) {
     XSetWindowAttributes attribs = {0};
     attribs.border_pixel = BlackPixel(display, screen_number);
     attribs.colormap = XCreateColormap(display, root_window, visual_info.visual, AllocNone);
-    attribs.event_mask = StructureNotifyMask;
+    attribs.event_mask = ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | StructureNotifyMask;
     long attribs_mask = CWBorderPixel | CWColormap | CWEventMask;
 
     if (attribs.colormap == 0) {
@@ -397,9 +399,19 @@ Platform_Window *window_create(void) {
         .initialized = true,
         .should_close = false,
         .cursor_locked = false,
-        .ignore_next_motion_event = false,
         .width = width,
         .height = height,
+
+        .input = (Platform_Input){
+            .keys = {0},
+            .buttons = {0},
+            .mouse_x = 0.0f,
+            .mouse_y = 0.0f,
+            .mouse_x_delta = 0.0f,
+            .mouse_y_delta = 0.0f,
+            .scroll = 0.0f,
+        },
+        .ignore_next_motion_event = false,
 
         .display = display,
         .context = context,
@@ -419,6 +431,31 @@ void window_destroy(Platform_Window *window) {
     window->initialized = false;
 }
 
+static void dispatch_button_event(Platform_Window *window, const XButtonEvent *event) {
+    if (event->button == Button4) {
+        window->input.scroll += 1.0f;
+        return;
+    } else if (event->button == Button5) {
+        window->input.scroll -= 1.0f;
+        return;
+    }
+
+    Mouse_Button button = xlib_to_mouse_button(event->button);
+    if (button == BUTTON_NONE) {
+        LOG_WARN("Untranslated X11 button: %ul", event->button);
+        return;
+    }
+
+    bool press = event->type == ButtonPress;
+    Input_Transitions *transition = &window->input.buttons[button];
+    if (press) {
+        *transition |= INPUT_TRANSITION_PRESSED | INPUT_TRANSITION_DOWN;
+    } else {
+        *transition &= ~INPUT_TRANSITION_DOWN;
+        *transition |= INPUT_TRANSITION_RELEASED;
+    }
+}
+
 static void dispatch_client_message_event(Platform_Window *window, const XClientMessageEvent *event) {
     Atom client_message = (Atom)event->data.l[0];
 
@@ -434,9 +471,44 @@ static void dispatch_configure_event(Platform_Window *window, const XConfigureEv
     glViewport(0, 0, event->width, event->height);
 }
 
-static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *event) {
-    (void)event;
+static bool prevent_key_repeat(const Platform_Window *window, const XKeyEvent *event) {
+    XEvent next_event = {0};
 
+    if (
+        XPending(window->display) > 0 && XPeekEvent(window->display, &next_event) &&
+        next_event.xany.window == window->window && next_event.type == KeyPress &&
+        next_event.xkey.keycode == event->keycode && next_event.xkey.time == event->time
+    ) {
+        XNextEvent(window->display, &next_event);
+        return true;
+    }
+
+    return false;
+}
+
+static void dispatch_key_event(Platform_Window *window, const XKeyEvent *event) {
+    if (prevent_key_repeat(window, event)) {
+        return;
+    }
+
+    KeySym keysym = XLookupKeysym((XKeyEvent *)event, 0);
+    Keyboard_Key key = xlib_to_keyboard_key(keysym);
+    if (key == KEY_NONE) {
+        LOG_WARN("Untranslated X11 KeySym: %ld.", keysym);
+        return;
+    }
+
+    bool press = event->type == KeyPress;
+    Input_Transitions *transition = &window->input.keys[key];
+    if (press) {
+        *transition |= INPUT_TRANSITION_PRESSED | INPUT_TRANSITION_DOWN;
+    } else {
+        *transition &= ~INPUT_TRANSITION_DOWN;
+        *transition |= INPUT_TRANSITION_RELEASED;
+    }
+}
+
+static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *event) {
     if (window->ignore_next_motion_event) {
         window->ignore_next_motion_event = false;
         return;
@@ -445,10 +517,28 @@ static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *e
     float center_x = window->width / 2.0f;
     float center_y = window->height / 2.0f;
 
+    window->input.mouse_x = event->x;
+    window->input.mouse_y = event->y;
+    window->input.mouse_x_delta += event->x - center_x;
+    window->input.mouse_y_delta += center_y - event->y;
+
     if (window->cursor_locked) {
         XWarpPointer(window->display, None, window->window, 0, 0, 0, 0, center_x, center_y);
         window->ignore_next_motion_event = true;
     }
+}
+
+static void reset_input(Platform_Input *input) {
+    for (int i = 0; i < KEY_COUNT; ++i) {
+        input->keys[i] &= INPUT_TRANSITION_DOWN;
+    }
+
+    for (int i = 0; i < BUTTON_COUNT; ++i) {
+        input->buttons[i] &= INPUT_TRANSITION_DOWN;
+    }
+
+    input->mouse_x_delta = 0.0f;
+    input->mouse_y_delta = 0.0f;
 }
 
 static Bool check_if_xlib_window_event(Display *display, XEvent *event, XPointer argument) {
@@ -460,15 +550,27 @@ static Bool check_if_xlib_window_event(Display *display, XEvent *event, XPointer
 }
 
 void window_poll_events(Platform_Window *window) {
+    reset_input(&window->input);
+
     XEvent event = {0};
     while (XCheckIfEvent(window->display, &event, check_if_xlib_window_event, (XPointer)window)) {
         switch (event.type) {
+        case ButtonPress:
+        case ButtonRelease:
+            dispatch_button_event(window, &event.xbutton);
+            break;
+
         case ClientMessage:
             dispatch_client_message_event(window, &event.xclient);
             break;
 
         case ConfigureNotify:
             dispatch_configure_event(window, &event.xconfigure);
+            break;
+
+        case KeyPress:
+        case KeyRelease:
+            dispatch_key_event(window, &event.xkey);
             break;
 
         case MotionNotify:
@@ -484,6 +586,10 @@ void window_swap_buffers(Platform_Window *window) {
 
 bool window_should_close(const Platform_Window *window) {
     return window->should_close;
+}
+
+void window_set_should_close(Platform_Window *window, bool should_close) {
+    window->should_close = should_close;
 }
 
 void window_position(const Platform_Window *window, int *out_x, int *out_y) {
@@ -553,4 +659,8 @@ void window_set_cursor_locked(Platform_Window *window, bool cursor_locked) {
     }
 
     window->cursor_locked = cursor_locked;
+}
+
+const Platform_Input *window_input(const Platform_Window *window) {
+    return &window->input;
 }

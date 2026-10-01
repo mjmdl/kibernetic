@@ -14,6 +14,8 @@ struct Platform_Window {
     int width;
     int height;
 
+    Platform_Input input;
+
     Display *display;
     GLXContext context;
     int screen_number;
