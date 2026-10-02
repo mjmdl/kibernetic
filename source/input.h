@@ -101,11 +101,11 @@ bool input_key_pressed(const Platform_Input *input, Keyboard_Key key);
 
 bool input_key_released(const Platform_Input *input, Keyboard_Key key);
 
-bool input_mouse_down(const Platform_Input *input, Mouse_Button button);
+bool input_button_down(const Platform_Input *input, Mouse_Button button);
 
-bool input_mouse_pressed(const Platform_Input *input, Mouse_Button button);
+bool input_button_pressed(const Platform_Input *input, Mouse_Button button);
 
-bool input_mouse_released(const Platform_Input *input, Mouse_Button button);
+bool input_button_released(const Platform_Input *input, Mouse_Button button);
 
 float input_mouse_x(const Platform_Input *input);
 

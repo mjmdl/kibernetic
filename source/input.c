@@ -24,7 +24,7 @@ bool input_key_released(Platform_Input const *input, Keyboard_Key key) {
     return input->keys[key] & INPUT_TRANSITION_RELEASED;
 }
 
-bool input_mouse_down(Platform_Input const *input, Mouse_Button button) {
+bool input_button_down(Platform_Input const *input, Mouse_Button button) {
     if (button < 0 || button >= BUTTON_COUNT) {
         return false;
     }
@@ -32,7 +32,7 @@ bool input_mouse_down(Platform_Input const *input, Mouse_Button button) {
     return input->buttons[button] & INPUT_TRANSITION_DOWN;
 }
 
-bool input_mouse_pressed(Platform_Input const *input, Mouse_Button button) {
+bool input_button_pressed(Platform_Input const *input, Mouse_Button button) {
     if (button < 0 || button >= BUTTON_COUNT) {
         return false;
     }
@@ -40,7 +40,7 @@ bool input_mouse_pressed(Platform_Input const *input, Mouse_Button button) {
     return input->buttons[button] & INPUT_TRANSITION_PRESSED;
 }
 
-bool input_mouse_released(Platform_Input const *input, Mouse_Button button) {
+bool input_button_released(Platform_Input const *input, Mouse_Button button) {
     if (button < 0 || button >= BUTTON_COUNT) {
         return false;
     }
