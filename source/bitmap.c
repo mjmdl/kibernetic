@@ -103,7 +103,8 @@ _Static_assert(sizeof(Bitmap_V3_Header) == 56, "");
 _Static_assert(sizeof(Bitmap_V4_Header) == 108, "");
 _Static_assert(sizeof(Bitmap_V5_Header) == 124, "");
 
-bool bitmap_load(const void *data, int size, Bitmap *out_bitmap) {
+bool bitmap_load(const void *data, int size, Bitmap *out_bitmap)
+{
     int min_header_size = sizeof (Bitmap_File_Header) + sizeof (uint32_t);
     if (size < min_header_size) {
         LOG_ERROR("Provided data size is %d but a bitmap file must be at least %d bytes long.", size, min_header_size);
@@ -188,12 +189,12 @@ bool bitmap_load(const void *data, int size, Bitmap *out_bitmap) {
         .pixels = destin,
         .width = width,
         .height = height,
-        .bytes_per_pixel = bytes_per_pixel,
-    };
+        .bytes_per_pixel = bytes_per_pixel};
     return true;
 }
 
-bool bitmap_load_from_path(const char *path, Bitmap *out_bitmap) {
+bool bitmap_load_from_path(const char *path, Bitmap *out_bitmap)
+{
     File file = {0};
     if (!file_read(path, &file)) {
         return false;
@@ -204,6 +205,7 @@ bool bitmap_load_from_path(const char *path, Bitmap *out_bitmap) {
     return loaded;
 }
 
-void bitmap_unload(Bitmap *bitmap) {
+void bitmap_unload(Bitmap *bitmap)
+{
     free(bitmap->pixels);
 }

@@ -15,7 +15,8 @@
 #include "file.h"
 #include "log.h"
 
-bool file_read(char const *path, File *out_file) {
+bool file_read(char const *path, File *out_file)
+{
     int file = open(path, O_RDONLY);
     if (file < 0) {
         LOG_ERROR("Failed to open file %s: %s", path, strerror(errno));
@@ -38,11 +39,11 @@ bool file_read(char const *path, File *out_file) {
 
     *out_file = (File){
         .data = data,
-        .size = info.st_size,
-    };
+        .size = info.st_size};
     return true;
 }
 
-void file_free(File *file) {
+void file_free(File *file)
+{
     munmap(file->data, file->size);
 }

@@ -12,7 +12,9 @@ typedef struct Bitmap {
 } Bitmap;
 
 bool bitmap_load(const void *data, int size, Bitmap *out_bitmap);
+
 bool bitmap_load_from_path(const char *path, Bitmap *out_bitmap);
+
 void bitmap_unload(Bitmap *bitmap);
 
 #endif // BITMAP_H

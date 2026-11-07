@@ -8,7 +8,8 @@
 #include "opengl.h"
 #include "renderer.h"
 
-static GLenum shader_kind_to_opengl_enum(Shader_Kind kind) {
+static GLenum shader_kind_to_opengl_enum(Shader_Kind kind)
+{
     switch (kind) {
     case SHADER_KIND_FRAGMENT:
         return GL_FRAGMENT_SHADER;
@@ -25,7 +26,8 @@ static GLenum shader_kind_to_opengl_enum(Shader_Kind kind) {
     }
 }
 
-static const char *opengl_enum_to_string(GLenum name) {
+static const char *opengl_enum_to_string(GLenum name)
+{
     switch (name) {
     case GL_COMPUTE_SHADER:
         return "compute";
@@ -44,7 +46,8 @@ static const char *opengl_enum_to_string(GLenum name) {
     }
 }
 
-bool shader_create_from_sources(const Shader_Source *sources, int souces_count, Shader *out_shader) {
+bool shader_create_from_sources(const Shader_Source *sources, int souces_count, Shader *out_shader)
+{
     if (1 > souces_count || souces_count > SHADER_SOURCE_MAX_COUNT) {
         LOG_ERROR("shader_create_from_sources expects between 1 and %d shader sources.", SHADER_SOURCE_MAX_COUNT);
         return false;
@@ -108,7 +111,8 @@ bool shader_create_from_sources(const Shader_Source *sources, int souces_count, 
     return true;
 }
 
-bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, Shader *out_shader) {
+bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, Shader *out_shader)
+{
     if (1 > paths_count || paths_count > SHADER_SOURCE_MAX_COUNT) {
         LOG_ERROR("shader_create_from_file_paths expects between 1 and %d shader sources.", SHADER_SOURCE_MAX_COUNT);
         return false;
@@ -154,11 +158,13 @@ bool shader_create_from_file_paths(const Shader_Source *paths, int paths_count, 
     return true;
 }
 
-void shader_destroy(Shader *shader) {
+void shader_destroy(Shader *shader)
+{
     glDeleteProgram(shader->id);
 }
 
-bool texture_load_from_path(const char *file_path, Texture *out_texture) {
+bool texture_load_from_path(const char *file_path, Texture *out_texture)
+{
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -180,6 +186,7 @@ bool texture_load_from_path(const char *file_path, Texture *out_texture) {
     return true;
 }
 
-void texture_destroy(Texture *texture) {
+void texture_destroy(Texture *texture)
+{
     glDeleteTextures(1, &texture->id);
 }

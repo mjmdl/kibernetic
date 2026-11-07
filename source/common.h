@@ -48,7 +48,8 @@
     GREATEST((MIN), LEAST((MAX), (X)))
 
 #if COMPILER_GCC || COMPILER_CLANG
-#   define PACKED_STRUCT() __attribute__((packed))
+#   define PACKED_STRUCT() \
+        __attribute__((packed))
 #endif
 #if !defined(PACKED_STRUCT)
 #   define PACKED_STRUCT()

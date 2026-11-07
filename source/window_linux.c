@@ -18,7 +18,8 @@ enum {
 static Platform_Window g_window;
 static char g_window_title[WINDOW_TITLE_MAX_LENGTH];
 
-static int handle_xlib_error_event(Display *display, XErrorEvent *event) {
+static int handle_xlib_error_event(Display *display, XErrorEvent *event)
+{
     char log[256];
     XGetErrorText(display, event->error_code, log, sizeof(log));
 
@@ -27,7 +28,8 @@ static int handle_xlib_error_event(Display *display, XErrorEvent *event) {
     return 0;
 }
 
-static void handle_opengl_debug_message(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const *message, void const *user_param) {
+static void handle_opengl_debug_message(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const *message, void const *user_param)
+{
     (void)user_param;
 
     #define LOG_GL_MESSAGE(LOGGER, LEVEL) \
@@ -54,7 +56,8 @@ static void handle_opengl_debug_message(GLenum source, GLenum type, GLuint id, G
     #undef LOG_GL_MESSAGE
 }
 
-static bool check_glx_version(Display *display) {
+static bool check_glx_version(Display *display)
+{
     int major = 0;
     int minor = 0;
     if (!glXQueryVersion(display, &major, &minor)) {
@@ -85,7 +88,8 @@ static bool check_glx_version(Display *display) {
 FOREACH_GLX_EXTENSION(DECLARE_VARIABLE)
 #undef DECLARE_VARIABLE
 
-static bool check_glx_extensions(Display *display, int screen_number) {
+static bool check_glx_extensions(Display *display, int screen_number)
+{
     const char *extensions = glXQueryExtensionsString(display, screen_number);
     if (extensions == NULL || *extensions == '\0') {
         LOG_ERROR("Failed to query the GLX extensions string.");
@@ -108,8 +112,7 @@ static bool check_glx_extensions(Display *display, int screen_number) {
                 else if (!support_##NAME && cstring_equal_no_case(#NAME, current_extension, length)) { \
                     support_##NAME = true; \
                 }
-            if (false) {
-            }
+            if (false) {}
             FOREACH_GLX_EXTENSION(COMPARE_EXTENSION)
             #undef COMPARE_EXTENSION
 
@@ -140,13 +143,15 @@ static bool check_glx_extensions(Display *display, int screen_number) {
 
 #undef FOREACH_GLX_EXTENSION
 
-static bool check_glx(Display *display, int screen_number) {
+static bool check_glx(Display *display, int screen_number)
+{
     bool version_supported = check_glx_version(display);
     bool extensions_supported = check_glx_extensions(display, screen_number);
     return version_supported && extensions_supported;
 }
 
-static bool query_xinerama_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height) {
+static bool query_xinerama_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height)
+{
     if (!XineramaIsActive(display)) {
         return false;
     }
@@ -171,13 +176,15 @@ static bool query_xinerama_screen_dimensions(Display *display, int screen_number
     return false;
 }
 
-static void query_xlib_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height) {
+static void query_xlib_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height)
+{
     Screen *screen = ScreenOfDisplay(display, screen_number);
     *out_width = WidthOfScreen(screen);
     *out_height = HeightOfScreen(screen);
 }
 
-static void query_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height) {
+static void query_screen_dimensions(Display *display, int screen_number, int *out_width, int *out_height)
+{
     if (query_xinerama_screen_dimensions(display, screen_number, out_width, out_height)) {
         return;
     }
@@ -185,7 +192,8 @@ static void query_screen_dimensions(Display *display, int screen_number, int *ou
     query_xlib_screen_dimensions(display, screen_number, out_width, out_height);
 }
 
-static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfig *out_fb_config, XVisualInfo *out_visual_info) {
+static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfig *out_fb_config, XVisualInfo *out_visual_info)
+{
     #define ATTRIB(KEY, VALUE) \
         (KEY), (VALUE)
     const int attribs[] = {
@@ -216,8 +224,7 @@ static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfi
         ATTRIB(GLX_TRANSPARENT_GREEN_VALUE, GLX_DONT_CARE),
         ATTRIB(GLX_TRANSPARENT_BLUE_VALUE, GLX_DONT_CARE),
         ATTRIB(GLX_TRANSPARENT_ALPHA_VALUE, GLX_DONT_CARE),
-        None,
-    };
+        None};
     #undef ATTRIB
 
     int fb_configs_count = 0;
@@ -244,11 +251,10 @@ static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfi
 
         int samples = 0;
         int sample_buffers = 0;
-        if (
-            glXGetFBConfigAttrib(display, fb_config, GLX_SAMPLES, &samples) != 0 ||
+        if (glXGetFBConfigAttrib(display, fb_config, GLX_SAMPLES, &samples) != 0 ||
             glXGetFBConfigAttrib(display, fb_config, GLX_SAMPLE_BUFFERS, &sample_buffers) != 0 ||
-            (samples <= best_samples || sample_buffers <= 0)
-        ) {
+            (samples <= best_samples || sample_buffers <= 0))
+        {
             XFree(visual_info);
             continue;
         }
@@ -278,7 +284,8 @@ static bool choose_glx_fb_config(Display *display, int screen_number, GLXFBConfi
     return true;
 }
 
-static bool load_opengl_procs(void) {
+static bool load_opengl_procs(void)
+{
     int loaded = 0;
     int failed = 0;
 
@@ -302,7 +309,8 @@ static bool load_opengl_procs(void) {
     }
 }
 
-static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window window, GLXContext *out_context) {
+static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window window, GLXContext *out_context)
+{
     typedef GLXContext(*Glx_Create_Context_Attribs_Arb_Proc)(Display *display, GLXFBConfig fb_config, GLXContext context, Bool direct, const int *attribs);
 
     #define ATTRIB(KEY, VALUE) \
@@ -312,8 +320,7 @@ static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window w
         ATTRIB(GLX_CONTEXT_MINOR_VERSION_ARB, 6),
         ATTRIB(GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB | GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB),
         ATTRIB(GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB),
-        None,
-    };
+        None};
     #undef ATTRIB
 
     Glx_Create_Context_Attribs_Arb_Proc glXCreateContextAttribsARB = (Glx_Create_Context_Attribs_Arb_Proc)glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
@@ -338,7 +345,8 @@ static bool create_glx_context(Display *display, GLXFBConfig fb_config, Window w
     return true;
 }
 
-static void setup_xlib_window_manager_protocols(Display *display, Window window, Atom *out_close_message) {
+static void setup_xlib_window_manager_protocols(Display *display, Window window, Atom *out_close_message)
+{
     Atom messages[1] = {0};
     messages[0] = XInternAtom(display, "WM_DELETE_WINDOW", False);
 
@@ -350,20 +358,23 @@ static void setup_xlib_window_manager_protocols(Display *display, Window window,
     *out_close_message = messages[0];
 }
 
-static Cursor create_xlib_hidden_cursor(Display *display, Window window) {
+static Cursor create_xlib_hidden_cursor(Display *display, Window window)
+{
     Pixmap pixmap = XCreateBitmapFromData(display, window, "\0", 1, 1);
     XColor color = {0};
     return XCreatePixmapCursor(display, pixmap, pixmap, &color, &color, 0, 0);
 }
 
-static void check_windowing_system(void) {
+static void check_windowing_system(void)
+{
     const char *protocol_name = getenv("XDG_SESSION_TYPE");
     if (protocol_name != NULL && cstring_equal_no_case(protocol_name, "wayland", sizeof("wayland")) == 0) {
         LOG_WARN("Wayland detected. Some windowing features might not work.");
     }
 }
 
-Platform_Window *window_create(void) {
+Platform_Window *window_create(void)
+{
     check_windowing_system();
 
     XSetErrorHandler(handle_xlib_error_event);
@@ -470,8 +481,7 @@ Platform_Window *window_create(void) {
             .mouse_y = 0.0f,
             .mouse_x_delta = 0.0f,
             .mouse_y_delta = 0.0f,
-            .scroll = 0.0f,
-        },
+            .scroll = 0.0f},
         .ignore_next_motion_event = false,
 
         .display = display,
@@ -480,19 +490,20 @@ Platform_Window *window_create(void) {
         .root_window = root_window,
         .window = window,
         .close_message = close_message,
-        .cursor_hidden = cursor_hidden,
-    };
+        .cursor_hidden = cursor_hidden};
     return &g_window;
 }
 
-void window_destroy(Platform_Window *window) {
+void window_destroy(Platform_Window *window)
+{
     glXDestroyContext(window->display, window->context);
     XCloseDisplay(window->display);
 
     window->initialized = false;
 }
 
-static void dispatch_button_event(Platform_Window *window, const XButtonEvent *event) {
+static void dispatch_button_event(Platform_Window *window, const XButtonEvent *event)
+{
     if (event->button == Button4) {
         window->input.scroll += 1.0f;
         return;
@@ -517,7 +528,8 @@ static void dispatch_button_event(Platform_Window *window, const XButtonEvent *e
     }
 }
 
-static void dispatch_client_message_event(Platform_Window *window, const XClientMessageEvent *event) {
+static void dispatch_client_message_event(Platform_Window *window, const XClientMessageEvent *event)
+{
     Atom client_message = (Atom)event->data.l[0];
 
     if (client_message == window->close_message) {
@@ -525,21 +537,22 @@ static void dispatch_client_message_event(Platform_Window *window, const XClient
     }
 }
 
-static void dispatch_configure_event(Platform_Window *window, const XConfigureEvent *event) {
+static void dispatch_configure_event(Platform_Window *window, const XConfigureEvent *event)
+{
     window->width = event->width;
     window->height = event->height;
 
     glViewport(0, 0, event->width, event->height);
 }
 
-static bool prevent_key_repeat(const Platform_Window *window, const XKeyEvent *event) {
+static bool prevent_key_repeat(const Platform_Window *window, const XKeyEvent *event)
+{
     XEvent next_event = {0};
 
-    if (
-        XPending(window->display) > 0 && XPeekEvent(window->display, &next_event) &&
+    if (XPending(window->display) > 0 && XPeekEvent(window->display, &next_event) &&
         next_event.xany.window == window->window && next_event.type == KeyPress &&
-        next_event.xkey.keycode == event->keycode && next_event.xkey.time == event->time
-    ) {
+        next_event.xkey.keycode == event->keycode && next_event.xkey.time == event->time)
+    {
         XNextEvent(window->display, &next_event);
         return true;
     }
@@ -547,7 +560,8 @@ static bool prevent_key_repeat(const Platform_Window *window, const XKeyEvent *e
     return false;
 }
 
-static void dispatch_key_event(Platform_Window *window, const XKeyEvent *event) {
+static void dispatch_key_event(Platform_Window *window, const XKeyEvent *event)
+{
     if (prevent_key_repeat(window, event)) {
         return;
     }
@@ -569,7 +583,8 @@ static void dispatch_key_event(Platform_Window *window, const XKeyEvent *event) 
     }
 }
 
-static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *event) {
+static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *event)
+{
     if (window->ignore_next_motion_event) {
         window->ignore_next_motion_event = false;
         return;
@@ -589,7 +604,8 @@ static void dispatch_motion_event(Platform_Window *window, const XMotionEvent *e
     }
 }
 
-static void reset_input(Platform_Input *input) {
+static void reset_input(Platform_Input *input)
+{
     for (int i = 0; i < KEY_COUNT; ++i) {
         input->keys[i] &= INPUT_TRANSITION_DOWN;
     }
@@ -602,7 +618,8 @@ static void reset_input(Platform_Input *input) {
     input->mouse_y_delta = 0.0f;
 }
 
-static Bool check_if_xlib_window_event(Display *display, XEvent *event, XPointer argument) {
+static Bool check_if_xlib_window_event(Display *display, XEvent *event, XPointer argument)
+{
     (void)display;
 
     Platform_Window *window = (Platform_Window *)argument;
@@ -610,7 +627,8 @@ static Bool check_if_xlib_window_event(Display *display, XEvent *event, XPointer
     return window->display == event->xany.display && window->window == event->xany.window;
 }
 
-void window_poll_events(Platform_Window *window) {
+void window_poll_events(Platform_Window *window)
+{
     reset_input(&window->input);
 
     XEvent event = {0};
@@ -641,27 +659,33 @@ void window_poll_events(Platform_Window *window) {
     }
 }
 
-void window_swap_buffers(Platform_Window *window) {
+void window_swap_buffers(Platform_Window *window)
+{
     glXSwapBuffers(window->display, window->window);
 }
 
-bool window_should_close(const Platform_Window *window) {
+bool window_should_close(const Platform_Window *window)
+{
     return window->should_close;
 }
 
-void window_set_should_close(Platform_Window *window, bool should_close) {
+void window_set_should_close(Platform_Window *window, bool should_close)
+{
     window->should_close = should_close;
 }
 
-void window_position(const Platform_Window *window, int *out_x, int *out_y) {
+void window_position(const Platform_Window *window, int *out_x, int *out_y)
+{
     XTranslateCoordinates(window->display, window->window, window->root_window, 0, 0, out_x, out_y, None);
 }
 
-void window_set_position(Platform_Window *window, int x, int y) {
+void window_set_position(Platform_Window *window, int x, int y)
+{
     XMoveWindow(window->display, window->window, x, y);
 }
 
-void window_move_to_center(Platform_Window *window) {
+void window_move_to_center(Platform_Window *window)
+{
     int screen_width = 0;
     int screen_height = 0;
     query_screen_dimensions(window->display, window->screen_number, &screen_width, &screen_height);
@@ -671,29 +695,34 @@ void window_move_to_center(Platform_Window *window) {
     XMoveWindow(window->display, window->window, x, y);
 }
 
-void window_dimensions(const Platform_Window *window, int *out_width, int *out_height) {
+void window_dimensions(const Platform_Window *window, int *out_width, int *out_height)
+{
     *out_width = window->width;
     *out_height = window->height;
 }
 
-void window_set_dimensions(Platform_Window *window, int width, int height) {
+void window_set_dimensions(Platform_Window *window, int width, int height)
+{
     XResizeWindow(window->display, window->window, width, height);
 
     window->width = width;
     window->height = height;
 }
 
-void window_screen_dimensions(const Platform_Window *window, int *out_width, int *out_height) {
+void window_screen_dimensions(const Platform_Window *window, int *out_width, int *out_height)
+{
     query_screen_dimensions(window->display, window->screen_number, out_width, out_height);
 }
 
-const char *window_title(const Platform_Window *window) {
+const char *window_title(const Platform_Window *window)
+{
     (void)window;
 
     return g_window_title;
 }
 
-void window_set_title(Platform_Window *window, const char *title) {
+void window_set_title(Platform_Window *window, const char *title)
+{
     if (title == NULL) {
         title = "";
     }
@@ -703,11 +732,13 @@ void window_set_title(Platform_Window *window, const char *title) {
     XStoreName(window->display, window->window, g_window_title);
 }
 
-bool window_cursor_locked(const Platform_Window *window) {
+bool window_cursor_locked(const Platform_Window *window)
+{
     return window->cursor_locked;
 }
 
-void window_set_cursor_locked(Platform_Window *window, bool cursor_locked) {
+void window_set_cursor_locked(Platform_Window *window, bool cursor_locked)
+{
     if (cursor_locked) {
         XDefineCursor(window->display, window->window, window->cursor_hidden);
 
@@ -722,11 +753,13 @@ void window_set_cursor_locked(Platform_Window *window, bool cursor_locked) {
     window->cursor_locked = cursor_locked;
 }
 
-bool window_vsync(const Platform_Window *window) {
+bool window_vsync(const Platform_Window *window)
+{
     return window->vsync;
 }
 
-void window_set_vsync(Platform_Window *window, bool vsync) {
+void window_set_vsync(Platform_Window *window, bool vsync)
+{
     typedef void(*Vsync_Proc)(Display *display, GLXDrawable drawable, int interval);
     static Vsync_Proc glXSwapIntervalEXT;
 
@@ -749,6 +782,7 @@ void window_set_vsync(Platform_Window *window, bool vsync) {
     window->vsync = vsync;
 }
 
-const Platform_Input *window_input(const Platform_Window *window) {
+const Platform_Input *window_input(const Platform_Window *window)
+{
     return &window->input;
 }

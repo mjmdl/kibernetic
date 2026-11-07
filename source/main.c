@@ -15,12 +15,10 @@ static const float plane_vertices[] = {
     -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
      0.5f, -0.5f, 0.0f,  0.0f, 1.0f,
      0.5f,  0.5f, 0.0f,  1.0f, 1.0f,
-    -0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
-};
+    -0.5f,  0.5f, 0.0f,  1.0f, 0.0f};
 static const unsigned int plane_indices[] = {
     0, 1, 2,
-    0, 2, 3,
-};
+    0, 2, 3};
 static const float cube_vertices[] = {
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -62,8 +60,7 @@ static const float cube_vertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-};
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f};
 static const Vector3 cube_positions[] = {
     { 0.0f,  0.0f,  0.0f },
     { 2.0f,  5.0f, -15.0f},
@@ -74,10 +71,10 @@ static const Vector3 cube_positions[] = {
     { 1.3f, -2.0f, -2.5f },
     { 1.5f,  2.0f, -2.5f },
     { 1.5f,  0.2f, -1.5f },
-    {-1.3f,  1.0f, -1.5f },
-};
+    {-1.3f,  1.0f, -1.5f }};
 
-static GLuint create_plane_mesh(GLint position_location, GLint texcoords_location) {
+static GLuint create_plane_mesh(GLint position_location, GLint texcoords_location)
+{
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -101,7 +98,8 @@ static GLuint create_plane_mesh(GLint position_location, GLint texcoords_locatio
     return vao;
 }
 
-static GLuint create_cube_mesh(GLint position_location, GLint texcoords_location) {
+static GLuint create_cube_mesh(GLint position_location, GLint texcoords_location)
+{
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -120,7 +118,8 @@ static GLuint create_cube_mesh(GLint position_location, GLint texcoords_location
     return vao;
 }
 
-static Vector3 process_movement_input(const Platform_Input *input) {
+static Vector3 process_movement_input(const Platform_Input *input)
+{
     Vector3 movement = {0};
     if (input_key_down(input, KEY_W)) {
         movement.x += 1.0f;
@@ -143,7 +142,8 @@ static Vector3 process_movement_input(const Platform_Input *input) {
     return vector3_normalize(movement);
 }
 
-int main(void) {
+int main(void)
+{
     Platform_Window *window = window_create();
     if (window == NULL) {
         return EXIT_FAILURE;
@@ -159,8 +159,7 @@ int main(void) {
 
     const Shader_Source shader_paths[] = {
         {.data = "shaders/texture3d.vertex.glsl", .kind = SHADER_KIND_VERTEX},
-        {.data = "shaders/texture3d.fragment.glsl", .kind = SHADER_KIND_FRAGMENT},
-    };
+        {.data = "shaders/texture3d.fragment.glsl", .kind = SHADER_KIND_FRAGMENT}};
     Shader shader = {0};
     shader_create_from_file_paths(shader_paths, 2, &shader);
 
@@ -191,8 +190,7 @@ int main(void) {
         loop_timer_begin(&timer);
         window_poll_events(window);
 
-        while (loop_timer_drain(&timer)) {
-        }
+        while (loop_timer_drain(&timer)) {}
 
         if (input_key_pressed(input, KEY_V)) {
             bool vsync = !window_vsync(window);
@@ -221,8 +219,7 @@ int main(void) {
         if (window_cursor_locked(window)) {
             camera_update(&camera, (Vector2){
                 .x = input_mouse_x_delta(input),
-                .y = input_mouse_y_delta(input),
-            });
+                .y = input_mouse_y_delta(input)});
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

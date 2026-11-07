@@ -1,7 +1,8 @@
 #include "log.h"
 #include "time.h"
 
-void loop_timer_reset(Loop_Timer *timer) {
+void loop_timer_reset(Loop_Timer *timer)
+{
     *timer = (Loop_Timer){
         .running_seconds_elapsed = 0.0,
         .seconds_per_tick = 1.0 / 20.0,
@@ -11,11 +12,11 @@ void loop_timer_reset(Loop_Timer *timer) {
         .maximum_frame_seconds = 1.0 / 4.0,
         .target_frame_seconds = 0.0,
         .debug_frame_count = 0,
-        .debug_seconds_elapsed = 0.0,
-    };
+        .debug_seconds_elapsed = 0.0};
 }
 
-void loop_timer_begin(Loop_Timer *timer) {
+void loop_timer_begin(Loop_Timer *timer)
+{
     double current_second = wallclock_seconds();
     timer->frame_seconds = current_second - timer->last_second;
 
@@ -27,7 +28,8 @@ void loop_timer_begin(Loop_Timer *timer) {
     timer->seconds_since_last_tick += timer->frame_seconds;
 }
 
-void loop_timer_end(Loop_Timer *timer) {
+void loop_timer_end(Loop_Timer *timer)
+{
     ++timer->debug_frame_count;
     timer->debug_seconds_elapsed += timer->frame_seconds;
 
@@ -53,7 +55,8 @@ void loop_timer_end(Loop_Timer *timer) {
     }
 }
 
-bool loop_timer_drain(Loop_Timer *timer) {
+bool loop_timer_drain(Loop_Timer *timer)
+{
     if (timer->seconds_since_last_tick >= timer->seconds_per_tick) {
         double drain_seconds = timer->seconds_per_tick * timer->tick_scale;
 

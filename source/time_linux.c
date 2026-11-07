@@ -11,13 +11,15 @@
 #include "log.h"
 #include "time.h"
 
-double wallclock_seconds(void) {
+double wallclock_seconds(void)
+{
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
     return (double)time.tv_sec + (double)time.tv_nsec * 1e-9;
 }
 
-void wallclock_sleep_seconds(double seconds) {
+void wallclock_sleep_seconds(double seconds)
+{
     if (seconds <= 0.0) {
         return;
     }

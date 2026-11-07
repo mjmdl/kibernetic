@@ -9,6 +9,7 @@ typedef struct File {
 } File;
 
 bool file_read(const char *path, File *out_file);
+
 void file_free(File *file);
 
 #endif // FILE_H

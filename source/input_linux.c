@@ -3,7 +3,8 @@
 
 #include "input_linux.h"
 
-Keyboard_Key xlib_to_keyboard_key(KeySym keysym) {
+Keyboard_Key xlib_to_keyboard_key(KeySym keysym)
+{
     switch (keysym) {
     case XK_Escape:
         return KEY_ESCAPE;
@@ -126,7 +127,8 @@ Keyboard_Key xlib_to_keyboard_key(KeySym keysym) {
     }
 }
 
-Mouse_Button xlib_to_mouse_button(unsigned int button) {
+Mouse_Button xlib_to_mouse_button(unsigned int button)
+{
     switch (button) {
     case Button1:
         return BUTTON_LEFT;
